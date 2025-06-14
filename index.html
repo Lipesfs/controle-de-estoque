@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Controle de Estoque</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .header h1 {
+            color: #1e3a8a;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header p {
+            color: #64748b;
+            font-size: 1.1rem;
+        }
+
+        .nav-tabs {
+            display: flex;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 12px;
+            padding: 8px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            overflow-x: auto;
+        }
+
+        .nav-tab {
+            flex: 1;
+            padding: 12px 20px;
+            background: transparent;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            color: #64748b;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+            min-width: 120px;
+        }
+
+        .nav-tab.active {
+            background: #1e3a8a;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(30, 58, 138, 0.3);
+        }
+
+        .nav-tab:hover:not(.active) {
+            background: #f1f5f9;
+            color: #1e3a8a;
+        }
+
+        .content-section {
+            display: none;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            animation: fadeIn 0.5s ease;
+        }
+
+        .content-section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #374151;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 16px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: #1e3a8a;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #1e40af;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(30, 58, 138, 0.3);
+        }
+
+        .btn-secondary {
+            background: #6b7280;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #4b5563;
+        }
+
+        .btn-danger {
+            background: #dc2626;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #b91c1c;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            margin-top: 20px;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .table th,
+        .table td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .table th {
+            background: #f8fafc;
+            font-weight: 600;
+            color: #374151;
+        }
+
+        .table tr:hover {
+            background: #f8fafc;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+            color: white;
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(59, 130, 246, 0.3);
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-card h3 {
+            font-size: 2rem;
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+
+        .stat-card p {
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+
+        .alert {
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        .alert-success {
+            background: #dcfce7;
+            color: #166534;
+            border: 1px solid #bbf7d0;
+        }
+
+        .alert-error {
+            background: #fef2f2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3b82f6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .nav-tabs {
+                flex-direction: column;
+            }
+            
+            .nav-tab {
+                min-width: auto;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Sistema de Controle de Estoque</h1>
+            <p>Gestão completa de placas de sinalização, obras, letreiros e adesivos</p>
+        </div>
+
+        <div class="nav-tabs">
+            <button class="nav-tab active" onclick="showSection('dashboard')">Dashboard</button>
+            <button class="nav-tab" onclick="showSection('produtos')">Produtos</button>
+            <button class="nav-tab" onclick="showSection('movimentacoes')">Movimentações</button>
+            <button class="nav-tab" onclick="showSection('relatorios')">Relatórios</button>
+        </div>
+
+        <!-- Dashboard Section -->
+        <div id="dashboard" class="content-section active">
+            <h2 style="margin-bottom: 20px; color: #1e3a8a;">Dashboard</h2>
+            <div class="stats-grid" id="statsGrid">
+                <!-- Stats will be loaded here -->
+            </div>
+            <div id="dashboardContent">
+                <!-- Dashboard content will be loaded here -->
+            </div>
+        </div>
+
+        <!-- Produtos Section -->
+        <div id="produtos" class="content-section">
+            <h2 style="margin-bottom: 20px; color: #1e3a8a;">Gestão de Produtos</h2>
+            
+            <div id="produtoAlert"></div>
+            
+            <form id="produtoForm" style="margin-bottom: 30px;">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="produtoNome">Nome do Produto</label>
+                        <input type="text" id="produtoNome" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="produtoQuantidade">Quantidade</label>
+                        <input type="number" id="produtoQuantidade" min="0" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="produtoDescricao">Descrição</label>
+                    <textarea id="produtoDescricao" rows="3"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">
+                    <span id="produtoSubmitText">Adicionar Produto</span>
+                    <div id="produtoLoading" class="loading" style="display: none;"></div>
+                </button>
+                <button type="button" class="btn btn-secondary" onclick="cancelarEdicao()" id="cancelarBtn" style="display: none;">Cancelar</button>
+            </form>
+
+            <div class="table-container">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nome</th>
+                            <th>Descrição</th>
+                            <th>Quantidade</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="produtosTableBody">
+                        <!-- Products will be loaded here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Movimentações Section -->
+        <div id="movimentacoes" class="content-section">
+            <h2 style="margin-bottom: 20px; color: #1e3a8a;">Movimentações de Estoque</h2>
+            
+            <div id="movimentacaoAlert"></div>
+            
+            <form id="movimentacaoForm" style="margin-bottom: 30px;">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="movProduto">Produto</label>
+                        <select id="movProduto" required>
+                            <option value="">Selecione um produto</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="movTipo">Tipo de Movimentação</label>
+                        <select id="movTipo" required>
+                            <option value="">Selecione o tipo</option>
+                            <option value="producao">Entrada por Produção</option>
+                            <option value="venda">Saída por Venda</option>
+                            <option value="transferencia_loja_galpao">Transferência Loja → Galpão</option>
+                            <option value="transferencia_galpao_loja">Transferência Galpão → Loja</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="movQuantidade">Quantidade</label>
+                    <input type="number" id="movQuantidade" min="1" required>
+                </div>
+                <button type="submit" class="btn btn-primary">
+                    <span id="movSubmitText">Registrar Movimentação</span>
+                    <div id="movLoading" class="loading" style="display: none;"></div>
+                </button>
+            </form>
+
+            <div class="table-container">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Produto</th>
+                            <th>Tipo</th>
+                            <th>Quantidade</th>
+                            <th>Origem/Destino</th>
+                        </tr>
+                    </thead>
+                    <tbody id="movimentacoesTableBody">
+                        <!-- Movimentações will be loaded here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Relatórios Section -->
+        <div id="relatorios" class="content-section">
+            <h2 style="margin-bottom: 20px; color: #1e3a8a;">Relatórios</h2>
+            
+            <div style="margin-bottom: 30px;">
+                <button class="btn btn-primary" onclick="gerarRelatorio('estoque_atual')" style="margin-right: 10px;">Estoque Atual</button>
+                <button class="btn btn-primary" onclick="gerarRelatorio('historico_movimentacoes')" style="margin-right: 10px;">Histórico de Movimentações</button>
+                <button class="btn btn-primary" onclick="gerarRelatorio('produtos_em_producao')">Produtos em Produção</button>
+            </div>
+
+            <div id="relatorioContent">
+                <p style="text-align: center; color: #64748b; font-style: italic;">Selecione um relatório para visualizar</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '/api';
+        let editandoProduto = null;
+
+        // Navigation
+        function showSection(sectionName) {
+            // Hide all sections
+            document.querySelectorAll('.content-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            
+            // Remove active class from all tabs
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected section
+            document.getElementById(sectionName).classList.add('active');
+            
+            // Add active class to clicked tab
+            event.target.classList.add('active');
+            
+            // Load data for the section
+            if (sectionName === 'dashboard') {
+                loadDashboard();
+            } else if (sectionName === 'produtos') {
+                loadProdutos();
+            } else if (sectionName === 'movimentacoes') {
+                loadMovimentacoes();
+                loadProdutosSelect();
+            }
+        }
+
+        // Dashboard functions
+        async function loadDashboard() {
+            try {
+                const [estoqueResponse, movimentacoesResponse] = await Promise.all([
+                    fetch(`${API_BASE}/relatorios/estoque_atual`),
+                    fetch(`${API_BASE}/movimentacoes`)
+                ]);
+
+                const estoqueData = await estoqueResponse.json();
+                const movimentacoesData = await movimentacoesResponse.json();
+
+                const statsGrid = document.getElementById('statsGrid');
+                statsGrid.innerHTML = `
+                    <div class="stat-card">
+                        <h3>${estoqueData.total_produtos}</h3>
+                        <p>Total de Produtos</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>${estoqueData.produtos_sem_estoque}</h3>
+                        <p>Produtos sem Estoque</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>${movimentacoesData.length}</h3>
+                        <p>Movimentações Recentes</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>${estoqueData.produtos.reduce((sum, p) => sum + p.quantidade_atual, 0)}</h3>
+                        <p>Total em Estoque</p>
+                    </div>
+                `;
+
+                // Show recent products
+                const dashboardContent = document.getElementById('dashboardContent');
+                dashboardContent.innerHTML = `
+                    <h3 style="margin-bottom: 15px; color: #1e3a8a;">Produtos com Baixo Estoque</h3>
+                    <div class="table-container">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Produto</th>
+                                    <th>Quantidade</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${estoqueData.produtos
+                                    .filter(p => p.quantidade_atual <= 5)
+                                    .map(produto => `
+                                        <tr>
+                                            <td>${produto.nome}</td>
+                                            <td>${produto.quantidade_atual}</td>
+                                            <td>
+                                                <span style="color: ${produto.quantidade_atual === 0 ? '#dc2626' : '#f59e0b'}; font-weight: 600;">
+                                                    ${produto.status}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            } catch (error) {
+                console.error('Erro ao carregar dashboard:', error);
+            }
+        }
+
+        // Product functions
+        async function loadProdutos() {
+            try {
+                const response = await fetch(`${API_BASE}/produtos`);
+                const produtos = await response.json();
+                
+                const tbody = document.getElementById('produtosTableBody');
+                tbody.innerHTML = produtos.map(produto => `
+                    <tr>
+                        <td>${produto.id}</td>
+                        <td>${produto.nome}</td>
+                        <td>${produto.descricao || '-'}</td>
+                        <td>${produto.quantidade}</td>
+                        <td>
+                            <button class="btn btn-secondary" onclick="editarProduto(${produto.id})" style="margin-right: 5px; padding: 6px 12px; font-size: 14px;">Editar</button>
+                            <button class="btn btn-danger" onclick="excluirProduto(${produto.id})" style="padding: 6px 12px; font-size: 14px;">Excluir</button>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error('Erro ao carregar produtos:', error);
+                showAlert('produtoAlert', 'Erro ao carregar produtos', 'error');
+            }
+        }
+
+        async function loadProdutosSelect() {
+            try {
+                const response = await fetch(`${API_BASE}/produtos`);
+                const produtos = await response.json();
+                
+                const select = document.getElementById('movProduto');
+                select.innerHTML = '<option value="">Selecione um produto</option>' +
+                    produtos.map(produto => `<option value="${produto.id}">${produto.nome}</option>`).join('');
+            } catch (error) {
+                console.error('Erro ao carregar produtos para select:', error);
+            }
+        }
+
+        document.getElementById('produtoForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const submitBtn = document.getElementById('produtoSubmitText');
+            const loading = document.getElementById('produtoLoading');
+            
+            submitBtn.style.display = 'none';
+            loading.style.display = 'inline-block';
+            
+            const formData = {
+                nome: document.getElementById('produtoNome').value,
+                descricao: document.getElementById('produtoDescricao').value,
+                quantidade: parseInt(document.getElementById('produtoQuantidade').value)
+            };
+            
+            try {
+                let response;
+                if (editandoProduto) {
+                    response = await fetch(`${API_BASE}/produtos/${editandoProduto}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(formData)
+                    });
+                } else {
+                    response = await fetch(`${API_BASE}/produtos`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(formData)
+                    });
+                }
+                
+                if (response.ok) {
+                    showAlert('produtoAlert', editandoProduto ? 'Produto atualizado com sucesso!' : 'Produto adicionado com sucesso!', 'success');
+                    document.getElementById('produtoForm').reset();
+                    cancelarEdicao();
+                    loadProdutos();
+                } else {
+                    const error = await response.json();
+                    showAlert('produtoAlert', error.erro || 'Erro ao salvar produto', 'error');
+                }
+            } catch (error) {
+                console.error('Erro:', error);
+                showAlert('produtoAlert', 'Erro ao salvar produto', 'error');
+            } finally {
+                submitBtn.style.display = 'inline';
+                loading.style.display = 'none';
+            }
+        });
+
+        async function editarProduto(id) {
+            try {
+                const response = await fetch(`${API_BASE}/produtos/${id}`);
+                const produto = await response.json();
+                
+                document.getElementById('produtoNome').value = produto.nome;
+                document.getElementById('produtoDescricao').value = produto.descricao || '';
+                document.getElementById('produtoQuantidade').value = produto.quantidade;
+                
+                editandoProduto = id;
+                document.getElementById('produtoSubmitText').textContent = 'Atualizar Produto';
+                document.getElementById('cancelarBtn').style.display = 'inline-block';
+            } catch (error) {
+                console.error('Erro ao carregar produto:', error);
+                showAlert('produtoAlert', 'Erro ao carregar produto', 'error');
+            }
+        }
+
+        function cancelarEdicao() {
+            editandoProduto = null;
+            document.getElementById('produtoSubmitText').textContent = 'Adicionar Produto';
+            document.getElementById('cancelarBtn').style.display = 'none';
+            document.getElementById('produtoForm').reset();
+        }
+
+        async function excluirProduto(id) {
+            if (!confirm('Tem certeza que deseja excluir este produto?')) return;
+            
+            try {
+                const response = await fetch(`${API_BASE}/produtos/${id}`, {
+                    method: 'DELETE'
+                });
+                
+                if (response.ok) {
+                    showAlert('produtoAlert', 'Produto excluído com sucesso!', 'success');
+                    loadProdutos();
+                } else {
+                    const error = await response.json();
+                    showAlert('produtoAlert', error.erro || 'Erro ao excluir produto', 'error');
+                }
+            } catch (error) {
+                console.error('Erro:', error);
+                showAlert('produtoAlert', 'Erro ao excluir produto', 'error');
+            }
+        }
+
+        // Movimentação functions
+        async function loadMovimentacoes() {
+            try {
+                const response = await fetch(`${API_BASE}/movimentacoes`);
+                const movimentacoes = await response.json();
+                
+                const tbody = document.getElementById('movimentacoesTableBody');
+                tbody.innerHTML = movimentacoes.map(mov => `
+                    <tr>
+                        <td>${new Date(mov.data).toLocaleString('pt-BR')}</td>
+                        <td>${mov.produto_nome}</td>
+                        <td>${formatarTipoMovimentacao(mov.tipo)}</td>
+                        <td>${mov.quantidade}</td>
+                        <td>${mov.origem_destino}</td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error('Erro ao carregar movimentações:', error);
+                showAlert('movimentacaoAlert', 'Erro ao carregar movimentações', 'error');
+            }
+        }
+
+        function formatarTipoMovimentacao(tipo) {
+            const tipos = {
+                'producao': 'Entrada por Produção',
+                'venda': 'Saída por Venda',
+                'transferencia_loja_galpao': 'Transferência Loja → Galpão',
+                'transferencia_galpao_loja': 'Transferência Galpão → Loja'
+            };
+            return tipos[tipo] || tipo;
+        }
+
+        document.getElementById('movimentacaoForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const submitBtn = document.getElementById('movSubmitText');
+            const loading = document.getElementById('movLoading');
+            
+            submitBtn.style.display = 'none';
+            loading.style.display = 'inline-block';
+            
+            const formData = {
+                produto_id: parseInt(document.getElementById('movProduto').value),
+                tipo: document.getElementById('movTipo').value,
+                quantidade: parseInt(document.getElementById('movQuantidade').value)
+            };
+            
+            try {
+                const response = await fetch(`${API_BASE}/movimentacoes`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData)
+                });
+                
+                if (response.ok) {
+                    showAlert('movimentacaoAlert', 'Movimentação registrada com sucesso!', 'success');
+                    document.getElementById('movimentacaoForm').reset();
+                    loadMovimentacoes();
+                } else {
+                    const error = await response.json();
+                    showAlert('movimentacaoAlert', error.erro || 'Erro ao registrar movimentação', 'error');
+                }
+            } catch (error) {
+                console.error('Erro:', error);
+                showAlert('movimentacaoAlert', 'Erro ao registrar movimentação', 'error');
+            } finally {
+                submitBtn.style.display = 'inline';
+                loading.style.display = 'none';
+            }
+        });
+
+        // Relatórios functions
+        async function gerarRelatorio(tipo) {
+            try {
+                const response = await fetch(`${API_BASE}/relatorios/${tipo}`);
+                const relatorio = await response.json();
+                
+                const content = document.getElementById('relatorioContent');
+                
+                if (tipo === 'estoque_atual') {
+                    content.innerHTML = `
+                        <h3>${relatorio.titulo}</h3>
+                        <p><strong>Total de produtos:</strong> ${relatorio.total_produtos}</p>
+                        <p><strong>Produtos sem estoque:</strong> ${relatorio.produtos_sem_estoque}</p>
+                        <div class="table-container" style="margin-top: 20px;">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Nome</th>
+                                        <th>Descrição</th>
+                                        <th>Quantidade</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${relatorio.produtos.map(produto => `
+                                        <tr>
+                                            <td>${produto.nome}</td>
+                                            <td>${produto.descricao || '-'}</td>
+                                            <td>${produto.quantidade_atual}</td>
+                                            <td>
+                                                <span style="color: ${produto.quantidade_atual === 0 ? '#dc2626' : '#16a34a'}; font-weight: 600;">
+                                                    ${produto.status}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+                } else if (tipo === 'historico_movimentacoes') {
+                    content.innerHTML = `
+                        <h3>${relatorio.titulo}</h3>
+                        <p><strong>Total de movimentações:</strong> ${relatorio.total_movimentacoes}</p>
+                        <div class="table-container" style="margin-top: 20px;">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Data</th>
+                                        <th>Produto</th>
+                                        <th>Tipo</th>
+                                        <th>Quantidade</th>
+                                        <th>Origem/Destino</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${relatorio.movimentacoes.map(mov => `
+                                        <tr>
+                                            <td>${new Date(mov.data).toLocaleString('pt-BR')}</td>
+                                            <td>${mov.produto_nome}</td>
+                                            <td>${formatarTipoMovimentacao(mov.tipo)}</td>
+                                            <td>${mov.quantidade}</td>
+                                            <td>${mov.origem_destino}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+                } else if (tipo === 'produtos_em_producao') {
+                    content.innerHTML = `
+                        <h3>${relatorio.titulo}</h3>
+                        <p><strong>Total de produtos em produção:</strong> ${relatorio.total_produtos_producao}</p>
+                        <div class="table-container" style="margin-top: 20px;">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Produto</th>
+                                        <th>Última Produção</th>
+                                        <th>Total Produzido</th>
+                                        <th>Quantidade Atual</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${relatorio.produtos.map(produto => `
+                                        <tr>
+                                            <td>${produto.produto_nome}</td>
+                                            <td>${produto.ultima_producao ? new Date(produto.ultima_producao).toLocaleString('pt-BR') : '-'}</td>
+                                            <td>${produto.total_produzido}</td>
+                                            <td>${produto.quantidade_atual}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Erro ao gerar relatório:', error);
+                document.getElementById('relatorioContent').innerHTML = '<p style="color: #dc2626;">Erro ao gerar relatório</p>';
+            }
+        }
+
+        // Utility functions
+        function showAlert(containerId, message, type) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = `
+                <div class="alert alert-${type}">
+                    ${message}
+                </div>
+            `;
+            
+            setTimeout(() => {
+                container.innerHTML = '';
+            }, 5000);
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadDashboard();
+        });
+    </script>
+</body>
+</html>
+
